@@ -10,6 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of {@link ImageService} for Yahoo.
+ *
+ * @author Hoang Tran
+ */
 public class YahooImageService implements ImageService {
 
     private static final String IMAGE_SEARCH_URL = "https://de.images.search.yahoo.com/search/images?p=";
