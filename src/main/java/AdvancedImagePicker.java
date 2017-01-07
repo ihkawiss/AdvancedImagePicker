@@ -1,14 +1,14 @@
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
-import javafx.event.EventHandler;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import services.ImageService;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public class AdvancedImagePicker extends BorderPane {
 
-    public static final int IMAGE_SQUARE_SIZE = 200;
+    public static final int IMAGE_SQUARE_PREFERRED_SIZE = 200;
     private final AdvancedImagePickerListener listener;
     private ImageService imageService;
     private String searchTerm;
@@ -43,8 +43,23 @@ public class AdvancedImagePicker extends BorderPane {
         // center
         imageTilePane = new TilePane();
         imageTilePane.prefWidthProperty().bind(widthProperty());
+        imageTilePane.prefWidthProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                int imageSquareSize = calculateImageSquareSize();
+                for (Node imageTile : imageTilePane.getChildren()) {
+                    if (imageTile instanceof ImageView) {
+                        ((ImageView)imageTile).setFitWidth(imageSquareSize);
+                        ((ImageView)imageTile).setFitHeight(imageSquareSize);
+                    }
+                }
+
+            }
+        });
+        imageTilePane.setStyle("--fx-border-width: 0; -fx-padding: 0;");
         centerScrollPane = new ScrollPane(imageTilePane);
         centerScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        centerScrollPane.setStyle("-fx-border-width: 0; -fx-padding: 0;  ");
         setCenter(centerScrollPane);
 
         // bottom bar
@@ -53,8 +68,8 @@ public class AdvancedImagePicker extends BorderPane {
         setBottom(ok);
 
         loadingImageView = new ImageView(AdvancedImageView.LOADING_IMAGE);
-        loadingImageView.setFitHeight(IMAGE_SQUARE_SIZE);
-        loadingImageView.setFitWidth(IMAGE_SQUARE_SIZE);
+        loadingImageView.setFitHeight(IMAGE_SQUARE_PREFERRED_SIZE);
+        loadingImageView.setFitWidth(IMAGE_SQUARE_PREFERRED_SIZE);
 
         // initial image load
         showImageSearchResults(searchTerm);
@@ -75,24 +90,30 @@ public class AdvancedImagePicker extends BorderPane {
             Object images = event.getSource().getValue();
             if (images instanceof List) {
                 imageTilePane.getChildren().clear();
-                for (int i = 0; i < 10; i++) {
-                    Image image = ((List<Image>) images).get(i);
-                    ImageView croppedImage = AdvancedImageUtils.cropImage(image, IMAGE_SQUARE_SIZE, IMAGE_SQUARE_SIZE);
-                    croppedImage.setCursor(Cursor.HAND);
-                    croppedImage.setOnMouseEntered(event1 -> {
-                        ColorAdjust colorAdjust = new ColorAdjust();
-                        colorAdjust.setBrightness(0.2);
-                        croppedImage.setEffect(colorAdjust);
-                    });
-                    croppedImage.setOnMouseExited(event1 -> croppedImage.setEffect(null));
-                    croppedImage.setOnMouseClicked(event12 -> listener.onImageSelected(image));
-                    imageTilePane.getChildren().add(croppedImage);
-                    setCenter(centerScrollPane);
-                }
-
+                int imageSquareSize = calculateImageSquareSize();
+                    for (int i = 0; i < 10; i++) {
+                        Image image = ((List<Image>) images).get(i);
+                        ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
+                        croppedImage.setCursor(Cursor.HAND);
+                        croppedImage.setOnMouseEntered(event1 -> {
+                            ColorAdjust colorAdjust = new ColorAdjust();
+                            colorAdjust.setBrightness(0.2);
+                            croppedImage.setEffect(colorAdjust);
+                        });
+                        croppedImage.setOnMouseExited(event1 -> croppedImage.setEffect(null));
+                        croppedImage.setOnMouseClicked(event1 -> listener.onImageSelected(image));
+                        imageTilePane.getChildren().add(croppedImage);
+                        setCenter(centerScrollPane);
+                    }
             }
         });
         new Thread(previewImageLoaderTask).start();
+    }
+
+    private int calculateImageSquareSize() {
+        double tilePaneWidth = imageTilePane.getPrefWidth();
+        int numberOfColumns = (int) (tilePaneWidth / IMAGE_SQUARE_PREFERRED_SIZE);
+        return (int) (tilePaneWidth / numberOfColumns);
     }
 
     public ImageService getImageService() {

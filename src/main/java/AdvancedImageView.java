@@ -43,7 +43,8 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         previewImageLoaderTask.setOnSucceeded(event -> {
             Object previewImage = event.getSource().getValue();
             if (previewImage instanceof Image) {
-                setImage((Image) previewImage);
+                ImageView imageView = AdvancedImageUtils.cropImage((Image) previewImage, getFitWidth(), getFitHeight());
+                setImage(imageView.getImage());
                 onPreviewImageLoaded();
             } else {
                 System.err.println("Preview image is not an instance of Image: " + previewImage.getClass().toString());
@@ -55,7 +56,6 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
     private void onPreviewImageLoaded() {
         setCursor(Cursor.HAND);
         setOnMouseClicked(event -> {
-            System.out.println("CLICKED");
             showAdvancedImagePickerDialog();
         });
     }
