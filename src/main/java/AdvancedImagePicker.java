@@ -11,14 +11,14 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
+import services.FlickrImageService;
 import services.ImageService;
-import services.YahooImageService;
 
 import java.util.List;
 
 public class AdvancedImagePicker extends BorderPane {
 
-    public static final int IMAGE_SQUARE_PREFERRED_SIZE = 200;
+    public static final int IMAGE_SQUARE_PREFERRED_SIZE = 350;
     private final AdvancedImagePickerListener listener;
     private ImageService imageService;
     private String searchTerm;
@@ -29,7 +29,7 @@ public class AdvancedImagePicker extends BorderPane {
     public AdvancedImagePicker(String searchTerm, AdvancedImagePickerListener listener) {
         super();
         this.listener = listener;
-        imageService = new YahooImageService();
+        imageService = new FlickrImageService();
 
         // top bar
         TextField tfSearch = new TextField(searchTerm);
@@ -91,7 +91,7 @@ public class AdvancedImagePicker extends BorderPane {
             if (images instanceof List) {
                 imageTilePane.getChildren().clear();
                 int imageSquareSize = calculateImageSquareSize();
-                    for (int i = 0; i < 10; i++) {
+                    for (int i = 0; i < 100; i++) {
                         Image image = ((List<Image>) images).get(i);
                         ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
                         croppedImage.setCursor(Cursor.HAND);

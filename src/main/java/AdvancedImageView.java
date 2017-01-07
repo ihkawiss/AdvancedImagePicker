@@ -7,8 +7,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import services.FlickrImageService;
 import services.ImageService;
-import services.YahooImageService;
 
 /**
  * Created by Hutschi on 04.01.2017.
@@ -25,7 +25,7 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
     public AdvancedImageView(String searchTerm) {
         super(LOADING_IMAGE);
         this.searchTerm = searchTerm;
-        imageService = new YahooImageService();
+        imageService = new FlickrImageService();
         loadPreviewImage();
         listener = this;
     }

@@ -1,8 +1,6 @@
 import javafx.application.Application;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
 public class Main extends Application{
@@ -11,7 +9,7 @@ public class Main extends Application{
 
 //        Parent rootPanel = new AdvancedImagePicker("Berliner Mauer");
 
-        AdvancedImageView advancedImageView = new AdvancedImageView("The Great Wall");
+        AdvancedImageView advancedImageView = new AdvancedImageView("Eiffel Tower");
         BorderPane rootPanel = new BorderPane();
         advancedImageView.setFitHeight(300);
         advancedImageView.setFitWidth(200);
