@@ -1,6 +1,6 @@
-package services;
+package ch.fhnw.cuie.advancedimagepicker.services;
 
-import javafx.scene.image.Image;
+import ch.fhnw.cuie.advancedimagepicker.ImageDataHolder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -15,18 +15,18 @@ import java.util.List;
  *
  * @author Hoang Tran
  */
-public class YahooImageService implements ImageService {
+public class YahooImageHtmlParserService implements ImageService {
 
     private static final String IMAGE_SEARCH_URL = "https://de.images.search.yahoo.com/search/images?p=";
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.76 Mobile Safari/537.36";
     private static final String IMAGE_CONTAINER_SELECTOR = "#results";
 
-    public Image getPreviewImage(String searchTerm) {
-        List<Image> result = getImages(searchTerm, 1);
+    public ImageDataHolder getPreviewImage(String searchTerm) {
+        List<ImageDataHolder> result = getImages(searchTerm, 1);
         return result.isEmpty() ? null : result.get(0);
     }
 
-    public List<Image> getImages(String searchTerm) {
+    public List<ImageDataHolder> getImages(String searchTerm) {
         return getImages(searchTerm, 0);
     }
 
@@ -36,10 +36,10 @@ public class YahooImageService implements ImageService {
      *
      * @param searchTerm Search term to find image results to
      * @param limit      0 for no limit, otherwise positive number
-     * @return List of Image elements
+     * @return List of ImageDataHolder elements
      */
-    private List<Image> getImages(String searchTerm, int limit) {
-        List<Image> results = new ArrayList<>();
+    private List<ImageDataHolder> getImages(String searchTerm, int limit) {
+        List<ImageDataHolder> results = new ArrayList<>();
 
         // adjust search term to be usable in yahoo search url
         searchTerm = searchTerm.trim().replace(" ", "+");
@@ -58,7 +58,7 @@ public class YahooImageService implements ImageService {
                     int counter = 0;
                     for (Element imgElement : imageContainer.select("img")) {
                         String url = imgElement.attr("src");
-                        results.add(new Image(url));
+                        results.add(new ImageDataHolder(url, url));
                         counter++;
 
                         if (limit > 0 && counter >= limit) {

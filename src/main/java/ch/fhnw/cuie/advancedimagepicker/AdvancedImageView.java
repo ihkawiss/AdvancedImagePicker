@@ -1,3 +1,5 @@
+package ch.fhnw.cuie.advancedimagepicker;
+
 import javafx.concurrent.Task;
 import javafx.scene.Cursor;
 import javafx.scene.Parent;
@@ -7,8 +9,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import services.FlickrImageService;
-import services.ImageService;
+import ch.fhnw.cuie.advancedimagepicker.services.FlickrImageService;
+import ch.fhnw.cuie.advancedimagepicker.services.ImageService;
 
 /**
  * Created by Hutschi on 04.01.2017.
@@ -34,20 +36,21 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
      * Loads preview image in a Thread to prevent UI from getting blocked.
      */
     private void loadPreviewImage() {
-        Task<Image> previewImageLoaderTask = new Task<Image>() {
+        Task<ImageDataHolder> previewImageLoaderTask = new Task<ImageDataHolder>() {
             @Override
-            protected Image call() throws Exception {
+            protected ImageDataHolder call() throws Exception {
                 return imageService.getPreviewImage(searchTerm);
             }
         };
         previewImageLoaderTask.setOnSucceeded(event -> {
-            Object previewImage = event.getSource().getValue();
-            if (previewImage instanceof Image) {
-                ImageView imageView = AdvancedImageUtils.cropImage((Image) previewImage, getFitWidth(), getFitHeight());
+            Object previewImageDataHolder = event.getSource().getValue();
+            if (previewImageDataHolder instanceof ImageDataHolder) {
+                Image previewImage = new Image(((ImageDataHolder) previewImageDataHolder).getImageUrl());
+                ImageView imageView = AdvancedImageUtils.cropImage(previewImage, getFitWidth(), getFitHeight());
                 setImage(imageView.getImage());
                 onPreviewImageLoaded();
             } else {
-                System.err.println("Preview image is not an instance of Image: " + previewImage.getClass().toString());
+                System.err.println("Preview image is not an instance of ImageDataHolder: " + previewImageDataHolder.getClass().toString());
             }
         });
         new Thread(previewImageLoaderTask).start();
@@ -65,7 +68,7 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         pickerDialog = new Stage();
         Parent root = new BorderPane(advancedImagePicker);
         pickerDialog.setScene(new Scene(root));
-        pickerDialog.setTitle("AdvancedImagePicker");
+        pickerDialog.setTitle("ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker");
         pickerDialog.setWidth(1020);
         pickerDialog.setHeight(620);
         pickerDialog.initModality(Modality.WINDOW_MODAL);
@@ -100,7 +103,8 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
     }
 
     @Override
-    public void onImageSelected(Image image) {
+    public void onImageSelected(ImageDataHolder imageDataHolder) {
+        Image image = new Image(imageDataHolder.getImageUrl());
         ImageView imageView = AdvancedImageUtils.cropImage(image, getFitWidth(), getFitHeight());
         setImage(imageView.getImage());
         if (pickerDialog.isShowing()) {

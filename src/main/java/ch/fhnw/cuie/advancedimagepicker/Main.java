@@ -1,3 +1,5 @@
+package ch.fhnw.cuie.advancedimagepicker;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -7,7 +9,7 @@ public class Main extends Application{
 
     public void start(Stage primaryStage) throws Exception {
 
-//        Parent rootPanel = new AdvancedImagePicker("Berliner Mauer");
+//        Parent rootPanel = new ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker("Berliner Mauer");
 
         AdvancedImageView advancedImageView = new AdvancedImageView("Eiffel Tower");
         BorderPane rootPanel = new BorderPane();
@@ -18,7 +20,7 @@ public class Main extends Application{
         Scene scene = new Scene(rootPanel);
 //        scene.setFill(Paint.valueOf("red"));
 
-        primaryStage.setTitle("AdvancedImagePicker");
+        primaryStage.setTitle("ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker");
         primaryStage.setWidth(900);
         primaryStage.setHeight(600);
 

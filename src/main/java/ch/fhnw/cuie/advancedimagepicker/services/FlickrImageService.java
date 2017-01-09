@@ -1,12 +1,12 @@
-package services;
+package ch.fhnw.cuie.advancedimagepicker.services;
 
+import ch.fhnw.cuie.advancedimagepicker.ImageDataHolder;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.REST;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.PhotoList;
 import com.flickr4java.flickr.photos.SearchParameters;
-import javafx.scene.image.Image;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,30 +19,30 @@ public class FlickrImageService implements ImageService{
 	private final int PER_PAGE_COUNT = 1;
 	
 	private Flickr service;
-	
-	public void FlickrImageImageSe() {
+
+	public FlickrImageService() {
 		service = new Flickr(API_KEY, API_SECRET, new REST());
 	}
 	
-	@SuppressWarnings("restriction")
 	@Override
-	public Image getPreviewImage(String searchTerm) {
-		
-		return getImages(searchTerm).get(0);
+	public ImageDataHolder getPreviewImage(String searchTerm) {
+		return getImages(searchTerm, 1, 0).get(0);
 	}
 
-	@SuppressWarnings("restriction")
 	@Override
-	public List<Image> getImages(String searchTerm) {
-		ArrayList<Image> images = new ArrayList<>();
+	public List<ImageDataHolder> getImages(String searchTerm) {
+		return getImages(searchTerm, 50, 0);
+	}
 
-		Flickr flickr = new Flickr(API_KEY, API_SECRET, new REST());
+	private List<ImageDataHolder> getImages(String searchTerm, int imageCount, int pageNum) {
+		ArrayList<ImageDataHolder> images = new ArrayList<>();
+
 		SearchParameters searchParameters = new SearchParameters();
 		searchParameters.setAccuracy(1);
 		searchParameters.setText(searchTerm);
 
 		try {
-			PhotoList<Photo> list = flickr.getPhotosInterface().search(searchParameters, 100, 0);
+			PhotoList<Photo> list = service.getPhotosInterface().search(searchParameters, imageCount, pageNum);
 			if (list.isEmpty()) {
 				System.out.println("empty");
 			}
@@ -50,7 +50,7 @@ public class FlickrImageService implements ImageService{
 			Iterator itr = list.iterator();
 			while (itr.hasNext()) {
 				Photo photo = (Photo) itr.next();
-				Image image = new Image(photo.getSquareLargeUrl());
+				ImageDataHolder image = new ImageDataHolder(photo.getMediumUrl(), photo.getLargeUrl());
 				images.add(image);
 			}
 		} catch (FlickrException e) {
@@ -58,5 +58,4 @@ public class FlickrImageService implements ImageService{
 		}
 		return images;
 	}
-
 }
