@@ -8,6 +8,6 @@ import java.util.List;
 public interface ImageService {
 
     ImageDataHolder getPreviewImage(String searchTerm);
-    List<ImageDataHolder> getImages(String searchTerm);
+    List<ImageDataHolder> getImages(String searchTerm, int numberOfImages, int pageIndex);
 
 }

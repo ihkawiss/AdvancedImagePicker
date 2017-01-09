@@ -30,11 +30,7 @@ public class FlickrImageService implements ImageService{
 	}
 
 	@Override
-	public List<ImageDataHolder> getImages(String searchTerm) {
-		return getImages(searchTerm, 50, 0);
-	}
-
-	private List<ImageDataHolder> getImages(String searchTerm, int imageCount, int pageNum) {
+	public List<ImageDataHolder> getImages(String searchTerm, int numberOfImages, int pageIndex) {
 		ArrayList<ImageDataHolder> images = new ArrayList<>();
 
 		SearchParameters searchParameters = new SearchParameters();
@@ -42,7 +38,7 @@ public class FlickrImageService implements ImageService{
 		searchParameters.setText(searchTerm);
 
 		try {
-			PhotoList<Photo> list = service.getPhotosInterface().search(searchParameters, imageCount, pageNum);
+			PhotoList<Photo> list = service.getPhotosInterface().search(searchParameters, numberOfImages, pageIndex);
 			if (list.isEmpty()) {
 				System.out.println("empty");
 			}

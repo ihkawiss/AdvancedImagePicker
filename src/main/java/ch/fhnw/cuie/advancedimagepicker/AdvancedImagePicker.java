@@ -1,6 +1,5 @@
 package ch.fhnw.cuie.advancedimagepicker;
 
-import ch.fhnw.cuie.advancedimagepicker.services.FlickrImageFancyService;
 import ch.fhnw.cuie.advancedimagepicker.services.FlickrImageService;
 import ch.fhnw.cuie.advancedimagepicker.services.ImageService;
 import ch.fhnw.cuie.advancedimagepicker.services.ImageServiceListener;
@@ -34,15 +33,12 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
     private final TilePane imageTilePane;
     private final ScrollPane centerScrollPane;
     private final ImageView loadingImageView;
-    private FlickrImageFancyService service;
     private final AtomicInteger numberOfRunningImageLoaderTasks = new AtomicInteger(0);
 
     public AdvancedImagePicker(String searchTerm, AdvancedImagePickerListener listener) {
         super();
         this.listener = listener;
         imageService = new FlickrImageService();
-        service = new FlickrImageFancyService();
-        service.setListener(this);
 
         // top bar
         TextField tfSearch = new TextField(searchTerm);
@@ -96,11 +92,119 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
         startImageSearch(searchTerm);
     }
 
+    private int calculateImageSquareSize() {
+        double tilePaneWidth = imageTilePane.getPrefWidth();
+        int numberOfColumns = (int) (tilePaneWidth / IMAGE_SQUARE_PREFERRED_SIZE);
+        return (int) (tilePaneWidth / numberOfColumns);
+    }
+
+    public ImageService getImageService() {
+        return imageService;
+    }
+
+    public void setImageService(ImageService imageService) {
+        this.imageService = imageService;
+    }
+
+    public String getSearchTerm() {
+        return searchTerm;
+    }
+
+    public void setSearchTerm(String searchTerm) {
+        this.searchTerm = searchTerm;
+    }
+
+    private void startImageSearch(String searchTerm) {
+        numberOfRunningImageLoaderTasks.set(0);
+        startImageSearch(searchTerm, 5, 10);
+    }
+
+
+    public void startImageSearch(String searchTerm, int imagesPerPage, int numberOfPages) {
+        Task<Void> imageSearchTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                for (int i = 0; i < numberOfPages; i++) {
+                    List<ImageDataHolder> imageDataHolders = imageService.getImages(searchTerm, imagesPerPage, i);
+                    onNewImageResults(imageDataHolders);
+                }
+                return null;
+            }
+        };
+        //imageSearchTask.setOnSucceeded(event -> listener.onFinished());
+        new Thread(imageSearchTask).start();
+    }
+
+    @Override
+    public void onNewImageResults(final List<ImageDataHolder> imageDataHolders) {
+
+        Task<List<ImageView>> previewImageLoaderTask = new Task<List<ImageView>>() {
+            @Override
+            protected List<ImageView> call() throws Exception {
+                int imageSquareSize = calculateImageSquareSize();
+                numberOfRunningImageLoaderTasks.incrementAndGet();
+                List<ImageView> imageViews = new ArrayList<>();
+                for (ImageDataHolder imageDataHolder : imageDataHolders) {
+                    Image image = new Image(imageDataHolder.getThumbnailUrl());
+                    ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
+                    croppedImage.setFitHeight(imageSquareSize);
+                    croppedImage.setFitWidth(imageSquareSize);
+                    croppedImage.setPreserveRatio(true);
+                    croppedImage.setSmooth(true);
+                    croppedImage.setCursor(Cursor.HAND);
+                    croppedImage.setOnMouseEntered(event1 -> {
+                        ColorAdjust colorAdjust = new ColorAdjust();
+                        colorAdjust.setBrightness(0.2);
+                        croppedImage.setEffect(colorAdjust);
+                    });
+                    croppedImage.setOnMouseExited(event1 -> croppedImage.setEffect(null));
+                    croppedImage.setOnMouseClicked(event1 -> listener.onImageSelected(imageDataHolder));
+                    imageViews.add(croppedImage);
+                }
+                return imageViews;
+            };
+        };
+        previewImageLoaderTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent event) {
+                int imageSquareSize = calculateImageSquareSize();
+                List<ImageView> imageViews = (List<ImageView>) event.getSource().getValue();
+                ObservableList<Node> tiles = imageTilePane.getChildren();
+                for (ImageView imageView : imageViews) {
+                    imageView.setFitHeight(imageSquareSize);
+                    imageView.setFitHeight(imageSquareSize);
+                    tiles.add(tiles.size()-1,imageView);
+                }
+
+                int i = numberOfRunningImageLoaderTasks.decrementAndGet();
+                System.out.println(i);
+                if (i == 0) {
+                    onFinished();
+                }
+            }
+        });
+        new Thread(previewImageLoaderTask).start();
+    }
+
+    @Override
+    public void onFinished() {
+        if (imageTilePane.getChildren().contains(loadingImageView)) {
+            imageTilePane.getChildren().remove(loadingImageView);
+        }
+    }
+
+
+
+
+
+
+
     private void showImageSearchResultsBackup(String newSearchTerm) {
         searchTerm = newSearchTerm;
         imageTilePane.getChildren().clear();
         setCenter(loadingImageView);
 
+        /*
         Task<Void> previewImageLoaderTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -127,83 +231,6 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
         previewImageLoaderTask.setOnSucceeded(event -> {
             setCenter(centerScrollPane);
         });
-        new Thread(previewImageLoaderTask).start();
-    }
-
-    private int calculateImageSquareSize() {
-        double tilePaneWidth = imageTilePane.getPrefWidth();
-        int numberOfColumns = (int) (tilePaneWidth / IMAGE_SQUARE_PREFERRED_SIZE);
-        return (int) (tilePaneWidth / numberOfColumns);
-    }
-
-    public ImageService getImageService() {
-        return imageService;
-    }
-
-    public void setImageService(ImageService imageService) {
-        this.imageService = imageService;
-    }
-
-    public String getSearchTerm() {
-        return searchTerm;
-    }
-
-    public void setSearchTerm(String searchTerm) {
-        this.searchTerm = searchTerm;
-    }
-
-    private void startImageSearch(String searchTerm) {
-        numberOfRunningImageLoaderTasks.set(0);
-        service.startImageSearch(searchTerm, 5, 10);
-    }
-
-    @Override
-    public void onNewImageResults(final List<ImageDataHolder> imageDataHolders) {
-
-        int imageSquareSize = calculateImageSquareSize();
-
-        Task<List<ImageView>> previewImageLoaderTask = new Task<List<ImageView>>() {
-            @Override
-            protected List<ImageView> call() throws Exception {
-                numberOfRunningImageLoaderTasks.incrementAndGet();
-                List<ImageView> imageViews = new ArrayList<>();
-                for (ImageDataHolder imageDataHolder : imageDataHolders) {
-                    Image image = new Image(imageDataHolder.getThumbnailUrl());
-                    ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
-                    croppedImage.setCursor(Cursor.HAND);
-                    croppedImage.setOnMouseEntered(event1 -> {
-                        ColorAdjust colorAdjust = new ColorAdjust();
-                        colorAdjust.setBrightness(0.2);
-                        croppedImage.setEffect(colorAdjust);
-                    });
-                    croppedImage.setOnMouseExited(event1 -> croppedImage.setEffect(null));
-                    croppedImage.setOnMouseClicked(event1 -> listener.onImageSelected(imageDataHolder));
-                    imageViews.add(croppedImage);
-                }
-                return imageViews;
-            };
-        };
-        previewImageLoaderTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
-            @Override
-            public void handle(WorkerStateEvent event) {
-                List<ImageView> imageViews = (List<ImageView>) event.getSource().getValue();
-                ObservableList<Node> tiles = imageTilePane.getChildren();
-                for (ImageView imageView : imageViews) {
-                    tiles.add(tiles.size()-1,imageView);
-                }
-
-                if (numberOfRunningImageLoaderTasks.decrementAndGet() == 0) {
-                    onFinished();
-                }
-            }
-        });
-        new Thread(previewImageLoaderTask).start();
-    }
-
-    @Override
-    public void onFinished() {
-        if (imageTilePane.getChildren().contains(loadingImageView)) {
-            imageTilePane.getChildren().remove(loadingImageView);
-        }
+        new Thread(previewImageLoaderTask).start();*/
     }
 }

@@ -26,7 +26,7 @@ public class YahooImageHtmlParserService implements ImageService {
         return result.isEmpty() ? null : result.get(0);
     }
 
-    public List<ImageDataHolder> getImages(String searchTerm) {
+    public List<ImageDataHolder> getImages(String searchTerm, int numberOfImages, int pageIndex) {
         return getImages(searchTerm, 0);
     }
 
