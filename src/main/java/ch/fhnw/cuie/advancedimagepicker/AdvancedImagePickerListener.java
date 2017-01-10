@@ -5,5 +5,4 @@ package ch.fhnw.cuie.advancedimagepicker;
  */
 public interface AdvancedImagePickerListener {
     void onImageSelected(ImageDataHolder image);
-    void onCancelled();
 }

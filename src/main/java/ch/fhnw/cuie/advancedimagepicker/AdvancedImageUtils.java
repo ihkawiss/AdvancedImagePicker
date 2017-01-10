@@ -9,7 +9,11 @@ import javafx.scene.image.WritableImage;
  */
 public class AdvancedImageUtils {
 
-    public static ImageView cropImage(Image image, double width, double height) {
+    private AdvancedImageUtils() {
+        // utility classes should not have public constructors
+    }
+
+    public static ImageView createCroppedImageView(Image image, double width, double height) {
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
 

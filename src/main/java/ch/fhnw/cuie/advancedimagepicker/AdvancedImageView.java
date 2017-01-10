@@ -22,7 +22,6 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
     protected final static Image LOADING_IMAGE = new Image(DEFAULT_LOADING_GIF_URL);
 
     private String searchTerm;
-    private AdvancedImagePickerListener listener;
     private ImageService imageService;
     private Stage pickerDialog;
 
@@ -32,13 +31,13 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         this.searchTerm = searchTerm;
         imageService = new FlickrImageService();
         loadPreviewImage();
-        listener = this;
     }
 
     /**
      * Loads preview image in a Thread to prevent UI from getting blocked.
      */
-    private void loadPreviewImage() {
+    public void loadPreviewImage() {
+        setImage(LOADING_IMAGE);
         Task<ImageDataHolder> previewImageLoaderTask = new Task<ImageDataHolder>() {
             @Override
             protected ImageDataHolder call() throws Exception {
@@ -49,8 +48,8 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
             Object previewImageDataHolder = event.getSource().getValue();
             if (previewImageDataHolder instanceof ImageDataHolder) {
                 Image previewImage = new Image(((ImageDataHolder) previewImageDataHolder).getImageInputStream());
-                ImageView imageView = AdvancedImageUtils.cropImage(previewImage, getFitWidth(), getFitHeight());
-                setImage(imageView.getImage());
+                ImageView croppedImageView = AdvancedImageUtils.createCroppedImageView(previewImage, getFitWidth(), getFitHeight());
+                setImage(croppedImageView.getImage());
                 onPreviewImageLoaded();
             } else {
                 System.err.println("Preview image is not an instance of ImageDataHolder: " + previewImageDataHolder.getClass().toString());
@@ -59,29 +58,27 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         new Thread(previewImageLoaderTask).start();
     }
 
-    private void onPreviewImageLoaded() {
+    protected void onPreviewImageLoaded() {
         setCursor(Cursor.HAND);
         setOnMouseClicked(event -> {
-            showAdvancedImagePickerDialog();
+            onClick();
         });
     }
 
-    private void showAdvancedImagePickerDialog() {
-        AdvancedImagePicker advancedImagePicker = new AdvancedImagePicker(searchTerm, listener);
+    protected void onClick() {
+        AdvancedImagePicker advancedImagePicker = new AdvancedImagePicker(searchTerm, this);
         pickerDialog = new Stage();
         Parent root = new BorderPane(advancedImagePicker);
         pickerDialog.setScene(new Scene(root));
         pickerDialog.setTitle("AdvancedImagePicker");
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         double dialogWidth = screenSize.getHeight();
-        double dialogHeight = dialogWidth*3/4;
+        double dialogHeight = dialogWidth * 3 / 4;
         pickerDialog.setWidth(dialogWidth);
         pickerDialog.setHeight(dialogHeight);
         pickerDialog.initModality(Modality.WINDOW_MODAL);
         pickerDialog.initOwner(getScene().getWindow());
         pickerDialog.show();
-
-        pickerDialog.setOnCloseRequest(event -> listener.onCancelled());
     }
 
     public String getSearchTerm() {
@@ -90,14 +87,6 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
 
     public void setSearchTerm(String searchTerm) {
         this.searchTerm = searchTerm;
-    }
-
-    public AdvancedImagePickerListener getListener() {
-        return listener;
-    }
-
-    public void setListener(AdvancedImagePickerListener listener) {
-        this.listener = listener;
     }
 
     public ImageService getImageService() {
@@ -111,15 +100,10 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
     @Override
     public void onImageSelected(ImageDataHolder imageDataHolder) {
         Image image = new Image(imageDataHolder.getImageInputStream());
-        ImageView imageView = AdvancedImageUtils.cropImage(image, getFitWidth(), getFitHeight());
-        setImage(imageView.getImage());
+        ImageView croppedImageView = AdvancedImageUtils.createCroppedImageView(image, getFitWidth(), getFitHeight());
+        setImage(croppedImageView.getImage());
         if (pickerDialog.isShowing()) {
             pickerDialog.close();
         }
-    }
-
-    @Override
-    public void onCancelled() {
-
     }
 }
