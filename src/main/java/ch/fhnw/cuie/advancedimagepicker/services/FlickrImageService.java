@@ -8,7 +8,6 @@ import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.PhotoList;
 import com.flickr4java.flickr.photos.SearchParameters;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,9 +33,14 @@ public class FlickrImageService implements ImageService{
 		ArrayList<ImageDataHolder> images = new ArrayList<>();
 
 		SearchParameters searchParameters = new SearchParameters();
-		searchParameters.setAccuracy(1);
 		searchParameters.setText(searchTerm);
-		searchParameters.setTags(new String[]{"building"});
+		searchParameters.setAccuracy(1);
+		searchParameters.setSort(SearchParameters.RELEVANCE);
+		try {
+			searchParameters.setMedia("photos");
+		} catch (FlickrException e) {
+			e.printStackTrace();
+		}
 
 		try {
 			PhotoList<Photo> list = service.getPhotosInterface().search(searchParameters, numberOfImages, pageIndex);
@@ -47,12 +51,13 @@ public class FlickrImageService implements ImageService{
 			Iterator itr = list.iterator();
 			while (itr.hasNext()) {
 				Photo photo = (Photo) itr.next();
-				try {
-					ImageDataHolder image = new ImageDataHolder(photo.getMediumAsStream(), photo.getLargeAsStream());
-					images.add(image);
+				//try {
+					//ImageDataHolder image = new ImageDataHolder(photo.getMediumAsStream(), photo.getLargeAsStream());
+					ImageDataHolder image = new ImageDataHolder(photo.getMediumUrl(), photo.getLargeUrl());
+					images.add(image);/*
 				} catch (IOException e) {
 					System.err.println("Failed to get image as InputStream: " + e.getMessage());
-				}
+				}*/
 			}
 		} catch (FlickrException e) {
 			e.printStackTrace();

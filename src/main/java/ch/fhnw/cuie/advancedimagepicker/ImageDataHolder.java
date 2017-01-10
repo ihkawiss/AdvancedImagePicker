@@ -1,24 +1,22 @@
 package ch.fhnw.cuie.advancedimagepicker;
 
-import java.io.InputStream;
-
 /**
  * @author Hoang Tran
  */
 public class ImageDataHolder {
-    private final InputStream thumbnailInputStream;
-    private final InputStream imageInputStream;
+    private final String thumbnailInputStream;
+    private final String imageInputStream;
 
-    public ImageDataHolder(InputStream thumbnailInputStream, InputStream imageInputStream) {
+    public ImageDataHolder(String thumbnailInputStream, String imageInputStream) {
         this.thumbnailInputStream = thumbnailInputStream;
         this.imageInputStream = imageInputStream;
     }
 
-    public InputStream getThumbnailInputStream() {
+    public String getThumbnailInputStream() {
         return thumbnailInputStream;
     }
 
-    public InputStream getImageInputStream() {
+    public String getImageInputStream() {
         return imageInputStream;
     }
 }

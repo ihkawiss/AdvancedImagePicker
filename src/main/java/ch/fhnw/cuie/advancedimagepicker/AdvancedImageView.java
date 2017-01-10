@@ -1,5 +1,7 @@
 package ch.fhnw.cuie.advancedimagepicker;
 
+import ch.fhnw.cuie.advancedimagepicker.services.FlickrImageService;
+import ch.fhnw.cuie.advancedimagepicker.services.ImageService;
 import javafx.concurrent.Task;
 import javafx.scene.Cursor;
 import javafx.scene.Parent;
@@ -9,8 +11,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import ch.fhnw.cuie.advancedimagepicker.services.FlickrImageService;
-import ch.fhnw.cuie.advancedimagepicker.services.ImageService;
+
+import java.awt.*;
 
 /**
  * Created by Hutschi on 04.01.2017.
@@ -26,6 +28,7 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
 
     public AdvancedImageView(String searchTerm) {
         super(LOADING_IMAGE);
+        setPreserveRatio(true);
         this.searchTerm = searchTerm;
         imageService = new FlickrImageService();
         loadPreviewImage();
@@ -68,9 +71,12 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         pickerDialog = new Stage();
         Parent root = new BorderPane(advancedImagePicker);
         pickerDialog.setScene(new Scene(root));
-        pickerDialog.setTitle("ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker");
-        pickerDialog.setWidth(1020);
-        pickerDialog.setHeight(620);
+        pickerDialog.setTitle("AdvancedImagePicker");
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double dialogWidth = screenSize.getHeight();
+        double dialogHeight = dialogWidth*3/4;
+        pickerDialog.setWidth(dialogWidth);
+        pickerDialog.setHeight(dialogHeight);
         pickerDialog.initModality(Modality.WINDOW_MODAL);
         pickerDialog.initOwner(getScene().getWindow());
         pickerDialog.show();

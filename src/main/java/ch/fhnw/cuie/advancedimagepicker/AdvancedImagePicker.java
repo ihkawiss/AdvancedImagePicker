@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AdvancedImagePicker extends BorderPane implements ImageServiceListener {
 
-    public static final int IMAGE_SQUARE_PREFERRED_SIZE = 200;
+    public static final int IMAGE_SQUARE_PREFERRED_SIZE = 350;
     private final AdvancedImagePickerListener listener;
     private ImageService imageService;
     private String searchTerm;
@@ -34,11 +34,25 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
     private final ScrollPane centerScrollPane;
     private final ImageView loadingImageView;
     private final AtomicInteger numberOfRemainingCallbacks = new AtomicInteger(0);
+    private final int numberOfImagesPerSearchRequest;
+    private final int numberOfPagesOnInitialSearchRequest;
+    private final int numberOfPagesOnLazyLoading;
+    private int currentImageSearchPage = 0;
+    private boolean initialLoadFinished = false;
+    private final int imageTileGapSize = 20;
 
     public AdvancedImagePicker(String searchTerm, AdvancedImagePickerListener listener) {
         super();
         this.listener = listener;
         imageService = new FlickrImageService();
+
+        numberOfImagesPerSearchRequest = 1;
+        numberOfPagesOnInitialSearchRequest = 50;
+        numberOfPagesOnLazyLoading = 10;
+
+        loadingImageView = new ImageView(AdvancedImageView.LOADING_IMAGE);
+        loadingImageView.setFitHeight(IMAGE_SQUARE_PREFERRED_SIZE);
+        loadingImageView.setFitWidth(IMAGE_SQUARE_PREFERRED_SIZE);
 
         // top bar
         TextField tfSearch = new TextField(searchTerm);
@@ -51,51 +65,55 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
 
         // center
         imageTilePane = new TilePane();
+        imageTilePane.setHgap(imageTileGapSize);
+        imageTilePane.setVgap(imageTileGapSize);
         imageTilePane.prefWidthProperty().bind(widthProperty());
         imageTilePane.prefWidthProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                int imageSquareSize = calculateImageSquareSize();
-                for (Node imageTile : imageTilePane.getChildren()) {
-                    if (imageTile instanceof ImageView) {
-                        ((ImageView) imageTile).setFitWidth(imageSquareSize);
-                        ((ImageView) imageTile).setFitHeight(imageSquareSize);
-                    }
-                }
-
+                resizeImageTiles();
             }
         });
         imageTilePane.setStyle("--fx-border-width: 0; -fx-padding: 0;");
         centerScrollPane = new ScrollPane(imageTilePane);
         centerScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         centerScrollPane.setStyle("-fx-border-width: 0; -fx-padding: 0;  ");
+        centerScrollPane.vvalueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                if (initialLoadFinished && newValue.intValue() == 1) {
+                    startImageSearch(searchTerm, numberOfImagesPerSearchRequest, numberOfPagesOnLazyLoading);
+                }
+            }
+        });
         setCenter(centerScrollPane);
-
-        // bottom bar
-        Button ok = new Button("OK");
-        ok.setOnMouseClicked(event -> imageTilePane.getChildren().add(new ImageView("http://qwerdesign.com/index/img/img_l2.jpg")));
-        setBottom(ok);
-
-        loadingImageView = new ImageView(AdvancedImageView.LOADING_IMAGE);
-        loadingImageView.setFitHeight(IMAGE_SQUARE_PREFERRED_SIZE);
-        loadingImageView.setFitWidth(IMAGE_SQUARE_PREFERRED_SIZE);
 
         // initial image load
         showImageSearchResults(searchTerm);
     }
 
-    private void showImageSearchResults(String newSearchTerm) {
-        searchTerm = newSearchTerm;
+    private void showImageSearchResults(String searchTerm) {
+        this.searchTerm = searchTerm;
         imageTilePane.getChildren().clear();
-        imageTilePane.getChildren().add(loadingImageView);
-        setCenter(centerScrollPane);
-        startImageSearch(searchTerm);
+        startImageSearch(searchTerm, numberOfImagesPerSearchRequest, numberOfPagesOnInitialSearchRequest);
+    }
+
+    private void resizeImageTiles() {
+        int imageSquareSize = calculateImageSquareSize();
+        imageTilePane.getChildren().stream().filter(imageTile -> imageTile instanceof ImageView).forEach(imageTile -> {
+            ((ImageView) imageTile).setFitWidth(imageSquareSize);
+            ((ImageView) imageTile).setFitHeight(imageSquareSize);
+        });
     }
 
     private int calculateImageSquareSize() {
-        double tilePaneWidth = imageTilePane.getPrefWidth();
-        int numberOfColumns = (int) (tilePaneWidth / IMAGE_SQUARE_PREFERRED_SIZE);
-        return (int) (tilePaneWidth / numberOfColumns);
+        double tilePaneWidth = imageTilePane.getPrefWidth() - 19;
+        int numberOfColumns = (int) Math.round(tilePaneWidth / IMAGE_SQUARE_PREFERRED_SIZE);
+        int numberOfGaps = numberOfColumns - 1;
+        if (numberOfColumns < 2) {
+            return (int) tilePaneWidth;
+        }
+        return (int) ((tilePaneWidth - (numberOfGaps * imageTileGapSize)) / numberOfColumns);
     }
 
     public ImageService getImageService() {
@@ -114,25 +132,24 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
         this.searchTerm = searchTerm;
     }
 
-    private void startImageSearch(String searchTerm) {
-        startImageSearch(searchTerm, 2, 20);
-    }
-
-
     public void startImageSearch(String searchTerm, int imagesPerPage, int numberOfPages) {
-        numberOfRemainingCallbacks.set(numberOfPages);
-        Task<Void> imageSearchTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                for (int i = 0; i < numberOfPages; i++) {
-                    List<ImageDataHolder> imageDataHolders = imageService.getImages(searchTerm, imagesPerPage, i);
-                    onNewImageResults(imageDataHolders);
+        if (!imageTilePane.getChildren().contains(loadingImageView)) {
+            imageTilePane.getChildren().add(loadingImageView);
+            numberOfRemainingCallbacks.set(numberOfPages);
+            Task<Void> imageSearchTask = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    for (int i = 0; i < numberOfPages; i++) {
+                        currentImageSearchPage++;
+                        List<ImageDataHolder> imageDataHolders = imageService.getImages(searchTerm, imagesPerPage, currentImageSearchPage);
+                        onNewImageResults(imageDataHolders);
+                    }
+                    return null;
                 }
-                return null;
-            }
-        };
-        //imageSearchTask.setOnSucceeded(event -> listener.onFinished());
-        new Thread(imageSearchTask).start();
+            };
+            //imageSearchTask.setOnSucceeded(event -> listener.onFinished());
+            new Thread(imageSearchTask).start();
+        }
     }
 
     @Override
@@ -189,7 +206,11 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
     public void onFinished() {
         if (imageTilePane.getChildren().contains(loadingImageView)) {
             imageTilePane.getChildren().remove(loadingImageView);
+            if (!initialLoadFinished) {
+                initialLoadFinished = true;
+            }
         }
+        resizeImageTiles();
     }
 
 
