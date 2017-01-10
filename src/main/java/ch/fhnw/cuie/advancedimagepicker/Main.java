@@ -1,36 +1,52 @@
 package ch.fhnw.cuie.advancedimagepicker;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-public class Main extends Application{
+public class Main extends Application {
 
-    public void start(Stage primaryStage) throws Exception {
+	public void start(Stage primaryStage) throws Exception {
 
-//        Parent rootPanel = new ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker("Berliner Mauer");
+		// Image View
+		AdvancedImageView advancedImageView = new AdvancedImageView("Eiffel Tower");
+		advancedImageView.setFitHeight(300);
+		advancedImageView.setFitWidth(200);
 
-        AdvancedImageView advancedImageView = new AdvancedImageView("Eiffel Tower");
-        BorderPane rootPanel = new BorderPane();
-        advancedImageView.setFitHeight(300);
-        advancedImageView.setFitWidth(200);
-        rootPanel.setTop(advancedImageView);
+		// Demo fields
+		Label lblName = new Label("Name");
+		lblName.setPadding(new Insets(23d));
 
-        Scene scene = new Scene(rootPanel);
-//        scene.setFill(Paint.valueOf("red"));
+		TextField buildingName = new TextField();
+		buildingName.setMinWidth(360d);
 
-        primaryStage.setTitle("ch.fhnw.cuie.advancedimagepicker.AdvancedImagePicker");
-        primaryStage.setWidth(900);
-        primaryStage.setHeight(600);
+		HBox hBox = new HBox();
+		hBox.setMargin(buildingName, new Insets(20d));
+		hBox.getChildren().addAll(lblName, buildingName);
 
-        primaryStage.setScene(scene);
+		// Main pane
+		BorderPane rootPanel = new BorderPane();
+		rootPanel.setCenter(advancedImageView);
+		rootPanel.setTop(hBox);
+		rootPanel.setCenter(advancedImageView);
 
-        primaryStage.show();
-    }
+		Scene scene = new Scene(rootPanel);
+		primaryStage.setTitle("AdvancedImagePicker");
+		primaryStage.setWidth(500);
+		primaryStage.setHeight(600);
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+		primaryStage.setScene(scene);
+		primaryStage.setResizable(false);
+		primaryStage.show();
+	}
+
+	public static void main(String[] args) {
+		launch(args);
+	}
 
 }
