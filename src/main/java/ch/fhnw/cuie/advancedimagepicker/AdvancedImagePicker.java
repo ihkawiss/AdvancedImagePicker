@@ -33,7 +33,7 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
     private final TilePane imageTilePane;
     private final ScrollPane centerScrollPane;
     private final ImageView loadingImageView;
-    private final AtomicInteger numberOfRunningImageLoaderTasks = new AtomicInteger(0);
+    private final AtomicInteger numberOfRemainingCallbacks = new AtomicInteger(0);
 
     public AdvancedImagePicker(String searchTerm, AdvancedImagePickerListener listener) {
         super();
@@ -115,12 +115,12 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
     }
 
     private void startImageSearch(String searchTerm) {
-        numberOfRunningImageLoaderTasks.set(0);
-        startImageSearch(searchTerm, 5, 10);
+        startImageSearch(searchTerm, 2, 20);
     }
 
 
     public void startImageSearch(String searchTerm, int imagesPerPage, int numberOfPages) {
+        numberOfRemainingCallbacks.set(numberOfPages);
         Task<Void> imageSearchTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -142,10 +142,9 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
             @Override
             protected List<ImageView> call() throws Exception {
                 int imageSquareSize = calculateImageSquareSize();
-                numberOfRunningImageLoaderTasks.incrementAndGet();
                 List<ImageView> imageViews = new ArrayList<>();
                 for (ImageDataHolder imageDataHolder : imageDataHolders) {
-                    Image image = new Image(imageDataHolder.getThumbnailUrl());
+                    Image image = new Image(imageDataHolder.getThumbnailInputStream());
                     ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
                     croppedImage.setFitHeight(imageSquareSize);
                     croppedImage.setFitWidth(imageSquareSize);
@@ -176,7 +175,7 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
                     tiles.add(tiles.size()-1,imageView);
                 }
 
-                int i = numberOfRunningImageLoaderTasks.decrementAndGet();
+                int i = numberOfRemainingCallbacks.decrementAndGet();
                 System.out.println(i);
                 if (i == 0) {
                     onFinished();
@@ -213,7 +212,7 @@ public class AdvancedImagePicker extends BorderPane implements ImageServiceListe
                 int imageSquareSize = calculateImageSquareSize();
                 for (int i = 0; i < 50; i++) {
                     ImageDataHolder imageDataHolder = images.get(i);
-                    Image image = new Image(imageDataHolder.getThumbnailUrl());
+                    Image image = new Image(imageDataHolder.getThumbnailInputStream());
                     ImageView croppedImage = AdvancedImageUtils.cropImage(image, imageSquareSize, imageSquareSize);
                     croppedImage.setCursor(Cursor.HAND);
                     croppedImage.setOnMouseEntered(event1 -> {

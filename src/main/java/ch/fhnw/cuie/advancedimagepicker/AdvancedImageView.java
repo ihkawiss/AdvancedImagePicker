@@ -45,7 +45,7 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
         previewImageLoaderTask.setOnSucceeded(event -> {
             Object previewImageDataHolder = event.getSource().getValue();
             if (previewImageDataHolder instanceof ImageDataHolder) {
-                Image previewImage = new Image(((ImageDataHolder) previewImageDataHolder).getImageUrl());
+                Image previewImage = new Image(((ImageDataHolder) previewImageDataHolder).getImageInputStream());
                 ImageView imageView = AdvancedImageUtils.cropImage(previewImage, getFitWidth(), getFitHeight());
                 setImage(imageView.getImage());
                 onPreviewImageLoaded();
@@ -104,7 +104,7 @@ public class AdvancedImageView extends ImageView implements AdvancedImagePickerL
 
     @Override
     public void onImageSelected(ImageDataHolder imageDataHolder) {
-        Image image = new Image(imageDataHolder.getImageUrl());
+        Image image = new Image(imageDataHolder.getImageInputStream());
         ImageView imageView = AdvancedImageUtils.cropImage(image, getFitWidth(), getFitHeight());
         setImage(imageView.getImage());
         if (pickerDialog.isShowing()) {
