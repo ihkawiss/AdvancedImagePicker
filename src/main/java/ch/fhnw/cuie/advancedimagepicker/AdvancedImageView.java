@@ -32,7 +32,7 @@ import java.awt.*;
 public class AdvancedImageView extends ImageView implements AdvancedImagePickerListener {
 
 	// prepare loading animation
-	private static final String DEFAULT_LOADING_GIF_URL = "https://goo.gl/ys7ob7";
+	private static final String DEFAULT_LOADING_GIF_URL = "http://goo.gl/ys7ob7";
 	protected static final Image LOADING_IMAGE = new Image(DEFAULT_LOADING_GIF_URL);
 
 	private String searchTerm;
