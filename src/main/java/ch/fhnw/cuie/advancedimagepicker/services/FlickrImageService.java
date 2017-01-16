@@ -12,64 +12,80 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This is the concrete Flickr ImageService.
+ * 
+ * @author Hoang Tran <hoang.tran@students.fhnw.ch>
+ * @author Kevin Kirn <kevin.kirn@students.fhnw.ch>
+ */
 public class FlickrImageService implements ImageService {
 
-    private static final String API_KEY = "44b9f70edc1ac4b26247794e6196bc16";
-    private static final String API_SECRET = "6c77bfcd85dfeb59";
-    private static final String DEFAULT_SEARCH_MEDIA_TYPE = "photos";
-    private static final int DEFAULT_SEARCH_ACCURACY = 1;
-    private static final int DEFAULT_SEARCH_SORTING = SearchParameters.RELEVANCE;
+	private static final String API_KEY = "44b9f70edc1ac4b26247794e6196bc16";
+	private static final String API_SECRET = "6c77bfcd85dfeb59";
+	private static final String DEFAULT_SEARCH_MEDIA_TYPE = "photos";
+	private static final int DEFAULT_SEARCH_ACCURACY = 1;
+	private static final int DEFAULT_SEARCH_SORTING = SearchParameters.RELEVANCE;
 
-    private Flickr flickr;
+	private Flickr flickr;
 
-    public FlickrImageService() {
-        this(API_KEY, API_SECRET);
-    }
+	public FlickrImageService() {
+		this(API_KEY, API_SECRET);
+	}
 
-    public FlickrImageService(String apiKey, String apiSecret) {
-        flickr = new Flickr(apiKey, apiSecret, new REST());
-    }
+	public FlickrImageService(String apiKey, String apiSecret) {
+		flickr = new Flickr(apiKey, apiSecret, new REST());
+	}
 
-    @Override
-    public ImageDataHolder getPreviewImage(String searchTerm) {
-        return getImages(searchTerm, 1, 0).get(0);
-    }
+	@Override
+	public ImageDataHolder getPreviewImage(String searchTerm) {
+		return getImages(searchTerm, 1, 0).get(0);
+	}
 
-    @Override
-    public List<ImageDataHolder> getImages(String searchTerm, int numberOfImages, int pageIndex) {
-        // prepare search parameters
-        SearchParameters searchParameters = new SearchParameters();
-        searchParameters.setText(searchTerm);
-        searchParameters.setAccuracy(DEFAULT_SEARCH_ACCURACY);
-        searchParameters.setSort(DEFAULT_SEARCH_SORTING);
-        try {
-            searchParameters.setMedia(DEFAULT_SEARCH_MEDIA_TYPE);
-        } catch (FlickrException e) {
-            System.out.println("Failed to set media to photos: " + e.getMessage());
-        }
+	@Override
+	public List<ImageDataHolder> getImages(String searchTerm, int numberOfImages, int pageIndex) {
 
-        ArrayList<ImageDataHolder> images = new ArrayList<>();
-        try {
-            PhotoList<Photo> photoList = flickr.getPhotosInterface().search(searchParameters, numberOfImages, pageIndex);
-            if (photoList.isEmpty()) {
-                System.out.println("Returning empty list. No Image Results found for: " + searchTerm);
-            }
+		// prepare search parameters
+		SearchParameters searchParameters = new SearchParameters();
+		searchParameters.setText(searchTerm);
+		searchParameters.setAccuracy(DEFAULT_SEARCH_ACCURACY);
+		searchParameters.setSort(DEFAULT_SEARCH_SORTING);
 
-            for (Photo photo : photoList) {
-                // create imageDataHolder element with urls and add to list
-                //ImageDataHolder imageDataHolder = new ImageDataHolder(photo.getMediumUrl(), photo.getLargeUrl());
-                ImageDataHolder imageDataHolder = null;
-                try {
-                    imageDataHolder = new ImageDataHolder(photo.getMediumAsStream(), photo.getLargeAsStream());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                images.add(imageDataHolder);
-            }
-        } catch (FlickrException e) {
-            System.err.println("Returning empty list. Image Search for \"" + searchTerm + "\" failed: " + e.getMessage());
-        }
+		// try to define media type
+		try {
+			searchParameters.setMedia(DEFAULT_SEARCH_MEDIA_TYPE);
+		} catch (FlickrException e) {
+			System.out.println("Failed to set media to photos: " + e.getMessage());
+		}
 
-        return images;
-    }
+		// prepare result holder
+		ArrayList<ImageDataHolder> images = new ArrayList<>();
+		
+		try {
+			
+			// pass search request to api
+			PhotoList<Photo> photoList = flickr.getPhotosInterface().search(searchParameters, numberOfImages, pageIndex);
+
+			if (photoList.isEmpty()) {
+				System.out.println("Returning empty list. No Image Results found for: " + searchTerm);
+			}
+
+			// put received photos into holder
+			for (Photo photo : photoList) {
+				ImageDataHolder imageDataHolder = null;
+
+				try {
+					imageDataHolder = new ImageDataHolder(photo.getMediumAsStream(), photo.getLargeAsStream());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				images.add(imageDataHolder);
+			}
+			
+		} catch (FlickrException e) {
+			System.err.println("Returning empty list. Image Search for \"" + searchTerm + "\" failed: " + e.getMessage());
+		}
+
+		return images;
+	}
 }

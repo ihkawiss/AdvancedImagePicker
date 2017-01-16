@@ -12,6 +12,14 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
+/**
+ * THIS IS ONLY A DEMO CLASS!
+ * 
+ * Prepare demo stage and add the AdvacedImageView.
+ * 
+ * @author Hoang Tran <hoang.tran@students.fhnw.ch>
+ * @author Kevin Kirn <kevin.kirn@students.fhnw.ch>
+ */
 public class Main extends Application {
 
 	public void start(Stage primaryStage) throws Exception {
