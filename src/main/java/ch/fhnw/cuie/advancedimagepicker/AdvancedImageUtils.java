@@ -5,7 +5,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 
 /**
- * Created by Hutschi on 06.01.2017.
+ * Utility class providing utility methods for Image operations.
+ *
+ * @author Hoang Tran <hoang.tran@students.fhnw.ch>
+ * @author Kevin Kirn <kevin.kirn@students.fhnw.ch>
  */
 public class AdvancedImageUtils {
 
@@ -13,6 +16,15 @@ public class AdvancedImageUtils {
         // utility classes should not have public constructors
     }
 
+    /**
+     * Creates an ImageView that shows a cropped version of given image.
+     * Cropped to given width and height.
+     *
+     * @param image  Image to be cropped
+     * @param width  Width of cropped image
+     * @param height Height of cropped image
+     * @return New cropped ImageView
+     */
     public static ImageView createCroppedImageView(Image image, double width, double height) {
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
